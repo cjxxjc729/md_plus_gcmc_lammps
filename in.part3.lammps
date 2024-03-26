@@ -1,0 +1,184 @@
+#<3>
+#<3.loop(main)> 主程序
+label       loopa
+variable    a loop ${mainloop_time}
+  print  "#3.main.loop> time ${a}"
+  print  "writing restart.equil"
+
+  write_restart restart.equil
+
+  #<3.1> 判断要增删哪些原子
+  print    "  #3.1> judge which atoms to be add or del"  #${a} 是要增加的原子de loop数
+  print    ""  
+  print    "  #3.1> ./scripts/adddel_conditions_2_adddel_files.py ${outfilename} "
+    #<3.1.atom_transform> run ./scripts/atom_transform.sh ${outfilename}
+    shell   ./scripts/atom_transform.sh ${outfilename}  #atom_transform will create natm_to_add.txt and natm_to_del.txt
+  print    ""
+  print    "  #3.1.end>"
+  #<3.1.end>
+
+
+  #<3.2> 增加原子的操作  
+  print    "  #3.2> add atoms"
+  print    ""
+  print    "  #3.2> read natm_to_add from ${dir_addinfo}/natm_to_add.txt"
+  variable  natm_to_add file ./${dir_addinfo}/natm_to_add.txt 
+  print "  #3.2> : we will add ${natm_to_add} atoms into the system"
+
+    #<3.2.if> 判断是否要增加原子
+    if "${natm_to_add} > 0" then "jump SELF 3.2.if.cond_1" else "jump SELF 3.2.if.cond_else"
+
+      #<3.2.if.cond1> 如果需要增加原子,则增加原子
+      label 3.2.if.cond_1
+
+        print  ""
+        print  "      #3.2.if.cond1> : add these atoms"
+        print  ""
+
+        #<3.2.if.cond1.loop> 增加原子loop
+        #以下执行增加原子的操作.将所需增加的原子及其坐标放在${dir_addinfo}/eleidx_to_add_${index}.txt ${dir_addinfo}/[x,y,z]_to_add_${index}.txt 
+        #以下通过loop增加原子    
+        label    loop_4_adatom
+          variable  index loop ${natm_to_add}
+ 
+          variable  ele_idx file ${dir_addinfo}/eleidx_to_add_${index}.txt
+
+          variable  x_cor_add file ${dir_addinfo}/x_to_add_${index}.txt
+          variable  y_cor_add file ${dir_addinfo}/y_to_add_${index}.txt
+          variable  z_cor_add file ${dir_addinfo}/z_to_add_${index}.txt
+
+          create_atoms  ${ele_idx}  single ${x_cor_add} ${y_cor_add} ${z_cor_add}
+          print ""
+          print "        #3.2.if.cond1.loop> : add the ${index}th atom"
+          print "        #3.2.if.cond1.loop>: ele_idx: ${ele_idx}     cordinates: ${x_cor_add} ${y_cor_add} ${z_cor_add}"  
+          print ""
+ 
+          variable  ele_idx delete
+
+          variable  x_cor_add delete
+          variable  y_cor_add delete
+          variable  z_cor_add delete
+
+          next    index
+        jump SELF loop_4_adatom
+        #<3.2.if.cond1.loop.end>
+
+      jump SELF 3.2.if.end
+      #<3.2.if.cond1.end>
+
+      #<3.2.if.cond_else>
+      label 3.2.if.cond_else
+
+        #若不增加原子,则跳过
+        print  ""
+        print  "      #3.2.if.cond_else> : notice the atom adding number is 0, jump the adding progress"
+
+      label 3.2.if.end
+      #<3.2.if.cond_else.end>
+    #<3.2.if.end>
+  
+    #<3.2.relax>
+    print    ""  
+    print    "    #3.2.relax> : doing structrual optimization :  minimize 1.0e-6 1.0e-8 100 10000"
+    print    ""
+
+    run 0
+    minimize 1.0e-6 1.0e-8 100 10000
+    print    "    #3.2.relax.end>"
+    #<3.2.relax.end>
+
+    #<3.2.delete_variables>
+    variable natm_to_add delete
+    #<3.2.delete_variables.end>
+  print "  3.2.end>"
+  #<3.2.end>
+  
+
+  #<3.3> 减少原子的操作
+
+  print    "  #3.3> operation of del----------------------"
+  print    ""
+  print    "  #3.3> read natm_to_del from ${dir_delinfo}/natm_to_del.txt"
+    #<3.3.read_variable_natm_to_del> 从${dir_delinfo}/natm_to_del.txt中读取删除原子信息
+    variable  natm_to_del file ${dir_delinfo}/natm_to_del.txt
+    print "    #3.3.read_variable_natm_to_del> we will del ${natm_to_del} atoms into the system"
+    #<3.3.read_variable_natm_to_del.end>
+
+    #<3.3.if>
+    if "${natm_to_del} > 0" then "jump SELF 3.3.if.cond_1" else "jump SELF 3.3.if.cond_else"
+     
+      #<3.3.if.cond_1>
+      label 3.3.if.cond_1
+
+        #<3.3.if.cond_1.loop> 执行删除原子的操作,将需要删除原子的原子序号给在这里
+        print  "        #3.3.if.cond_1.loop> : deleltion loop"
+        label    loop_4_deatom
+        variable  index loop ${natm_to_del}
+
+
+          variable  del_id file ${dir_delinfo}/index_to_del_${index}.txt
+          if     "${index} == 1" then &
+             "group  del_group id  ${del_id}"
+
+          group    del_id_${index} id ${del_id}
+          group    del_group  union  del_group del_id_${index}
+          group    del_id_${index}  delete
+
+          print ""
+          print "[3.operation of del] : delete the ${index}th atom"
+          print "[3.operation of del] : delete the atom id of ${del_id}"
+          print ""
+
+          variable  del_id  delete    
+
+        next    index
+        jump SELF loop_4_deatom
+        #<3.3.if.cond_1.loop.end> 
+
+      delete_atoms group del_group compress yes 
+    
+     
+      jump SELF 3.3.if.end
+      #<3.3.if.cond_1.end>        
+
+      #<3.3.if.cond_else>
+      label 3.3.if.cond_else
+
+      #若不del原子,则跳过
+      print  ""
+      print  "[3.operation of del] : notice the atom del number is 0, jump the del progress"
+    
+    label 3.3.if.end
+    #<3.3.if.end>  
+
+    #<3.3.delete_variables>
+      variable natm_to_del delete 
+    #<3.3.delete_variables.end>  
+
+  print    ""
+  print    "  #3.3.end>"
+  print    ""
+  #<3.3.end>  
+
+  #<3.4> run
+#    region region_to_del_Na block 131 181 120 215 80 140 side out
+#   group outside_Na region region_to_del_Na
+#    delete_atoms group outside_Na compress yes    
+
+#  region region_to_del_Na delete
+#  group outside_Na delete
+
+  velocity        all create 300.0 4928459 rot yes dist gaussian
+  fix             1 all nvt temp 300.0 300.0 0.1
+
+  run             ${run_time_at_each_loop}
+
+  unfix           1
+ 
+  compute         $a all temp
+  #<3.4.end>
+
+next        a
+jump SELF loopa
+#<3.loop(main).end>
+#<3.end>

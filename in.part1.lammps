@@ -1,0 +1,16 @@
+#
+#<1> LAMMPS input variables
+variable  dir_4_ftmp  string "operation_center.tmp_files"
+variable  dir_addinfo string "operation_center.add_info"
+variable  dir_delinfo string "operation_center.del_info"
+
+variable  dp_file_name string "graph_compress.pb" 
+variable  data_filename string "VOx_arm_Ti3C2.data"
+
+variable  outfilename string "ann.lammpstrj"
+variable  mainloop_time  equal 100
+variable  run_time_at_each_loop equal 2000
+variable  dump_freq equal 100
+#<1.end>
+
+

@@ -1,0 +1,30 @@
+#<2> LAMMPS 字头
+units           metal
+boundary        p p p
+
+atom_style      atomic
+
+read_data      ${data_filename}
+mass 1 12.0100 # C
+mass 2 14.0067 # N
+mass 3 22.989770 # Na
+mass 4 15.9994 # O
+mass 5 47.867 # Ti
+mass 6 50.9414 # V
+
+pair_style      deepmd ${dp_file_name}
+pair_coeff      * *
+neighbor        2.0 bin
+neigh_modify    every 10 delay 0 check no
+
+velocity        all create 300.0 4928459 rot yes dist gaussian
+fix             1 all nvt temp 300.0 300.0 0.1
+
+thermo          10
+dump            1 all custom ${dump_freq} ${outfilename} id type x y z
+compute         ae0 all pe/atom
+dump            2 all custom ${dump_freq} ae.${outfilename} id type c_ae0
+
+timestep        0.001  # 0.001 means 1fs
+run             0
+#<2.end>
