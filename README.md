@@ -16,4 +16,4 @@ edit add_rules.py  del_rules.py to set add and del rules. One can also use the t
 
 This example simulates the intercalation and deintercalation process of Na in C within an amorphous VOx matrix. The simulation is conducted in increments of 5000 steps. At the end of every 5000-step interval, 7 Na atoms are added to the VOx region. Subsequently, these atoms are removed if they are below a certain chemical potential threshold.
 
-![alt text](fig1.png)
+<img src="fig1.png" alt="alt text" width="700"> <br>
